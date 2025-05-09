@@ -8,38 +8,44 @@ The process can be broadly categorized into the following interconnected stages:
 
 Battery Degradation Model Development (my_actual_degradation_model.py):
 Objective: To create a predictive model for battery health (capacity fade and resistance increase).
+
 Process:
 Data Generation: A simulation function, driven by Monte Carlo sampling of various operational parameters (temperature, Depth of Discharge, charge/discharge rates, initial State-of-Health (SoH), traffic levels, etc.) from defined statistical distributions, generates a large dataset. This dataset maps diverse operating conditions to their corresponding degradation outcomes.
 
 Machine Learning: A Machine Learning model (e.g., Neural Network or Tree-based model as specified in the configuration) is trained on this synthetic dataset.
 Output: The script saves the trained degradation model (e.g., .keras or .joblib file) and the data scaler used during preprocessing. These become critical inputs for later simulation stages.
 Key Outputs: Trained ML model, data scaler, performance plots (Actual vs. Predicted, Feature Importance, Sensitivity).
+
 (Offline Prerequisite) PyBaMM Thermal Analysis (Conceptual - generate_pybamm_lookup.py )
 Objective: To provide realistic internal battery operating temperatures based on ambient conditions.
 Process: Detailed PyBaMM simulations are run offline across a range of ambient temperatures and potentially load conditions to model the battery's thermal behavior.
 Key Output: A lookup table (pybamm_temperature_lookup.csv) mapping ambient temperature to effective internal battery temperature.
 
 City-Scale Energy Balance & Financial Simulation (renewbalanceX.py - e.g., renewbalance7.py):
+
 Objective: To simulate the hourly energy dynamics of a city integrating a growing EV fleet with renewable energy sources and optional grid storage, and to perform an initial financial assessment.
-Process:
 Data Ingestion: Loads city data (population, temperature), renewable energy capacity forecasts (yearly MW for solar/wind per city), hourly renewable generation profiles, and the PyBaMM temperature lookup table.
 
 EV Fleet & Demand Forecasting: Projects EV fleet size based on population and adoption rates. Calculates hourly charging demand, factoring in:
-Battery Degradation: Imports and utilizes the trained ML degradation model (from stage 1) and the data scaler. The effective battery temperature from the PyBaMM lookup is a key input here. The model updates the fleet's average SoH over the simulation years.
 
-Renewable Supply Modeling: Calculates hourly renewable energy generation based on interpolated yearly capacities and normalized hourly profiles.
-Hourly Energy Balance Simulation: For each hour over several years:
+Battery Degradation: Imports and utilizes the trained ML degradation model (from stage 1) and the data scaler. The effective battery temperature from the PyBaMM lookup is a key input here. The model updates the fleet's average SoH over the simulation years.
+Renewable Supply Modeling: Calculates hourly renewable energy generation based on interpolated yearly capacities and normalized hourly profiles
+
+Hourly Energy Balance Simulation: For each hour over several years;
 Balances EV charging demand with available renewable supply, grid storage (if configured), and grid imports/exports, respecting defined limits.
 Tracks key metrics like unmet demand, renewable curtailment, grid draw, and storage state of charge.
+
 Financial Calculation: Based on simulated energy flows, CAPEX/OPEX assumptions, grid electricity prices, and discount rates, it calculates:
 Annual system costs.
 
 Levelized Cost of Energy (LCOE) for the city-scale system.
 Potential lifetime savings compared to a baseline.
 Key Outputs: Aggregate summary CSV per city, detailed hourly simulation results (Parquet/CSV), and various analytical/comparison plots.
-(Optional) Interactive Degradation Prediction (deg_upd_simp.py):
+
+Interactive Degradation Prediction (deg_upd_simp.py):
 Objective: To provide a user-friendly interface for quick, individual EV battery degradation predictions.
-Process: Loads the pre-trained degradation model and scaler (from stage 1). Takes simplified user inputs (e.g., climate, usage style) and maps them to the model's technical features to generate a prediction.
+Process: Loads the pre-trained degradation model and scaler (from stage 1). 
+takes simplified user inputs (e.g., climate, usage style) and maps them to the model's technical features to generate a prediction.
 Key Output: Degradation prediction printed to the console.
 
 Application to EV Charging Station Viability Analysis (Conceptual Framework leveraging outputs from renewbalanceX.py):
